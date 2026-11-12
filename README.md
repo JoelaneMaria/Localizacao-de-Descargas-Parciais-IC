@@ -2,12 +2,6 @@
 
 ## Simulador do Modelo de Dois Raios
 
-<p align="center">
-  <a href="https://joelanemaria.github.io/Localizacao-de-Descargas-Parciais-IC/">
-    <strong> ACESSAR SIMULADOR ONLINE</strong>
-  </a>
-</p>
-
 ## Sobre o projeto
 
 Este projeto apresenta um simulador baseado no Modelo de Dois Raios com Reflexão no Solo (Two-Ray Ground Reflection Model), permitindo analisar a propagação de ondas eletromagnéticas e a potência recebida em função da distância e da altura da antena transmissora.
