@@ -17,7 +17,7 @@ Este projeto apresenta um simulador baseado no Modelo de Dois Raios com Reflexã
 
 O programa pode ser utilizado diretamente pelo navegador, sem necessidade de instalação.
 
-[**Clique aqui para abrir o simulador.**](https://joelanemaria.github.io/Localizacao-de-Descargas-Parciais-IC/)
+[**Abrir Simulador.**](https://joelanemaria.github.io/Localizacao-de-Descargas-Parciais-IC/)
 
 ## Código-fonte
 
