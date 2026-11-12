@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Two-Ray Ground Reflection Model</title>
+<script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script"></script>
+<style>
+  :root[data-theme="dark"] {
+    --bg:        #0f1117;
+    --surface:   #1a1d27;
+    --card:      #22263a;
+    --border:    #2e3350;
+    --accent:    #5c7cfa;
+    --accent2:   #f03e3e;
+    --text:      #e8eaf6;
+    --muted:     #8b90b0;
+    --input-bg:  #2a2f48;
+    --shadow:    0 4px 24px rgba(0,0,0,.5);
+  }
+  :root[data-theme="light"] {
+    --bg:        #f0f2f8;
+    --surface:   #ffffff;
+    --card:      #ffffff;
+    --border:    #d0d5e8;
+    --accent:    #3b5bdb;
+    --accent2:   #e03131;
+    --text:      #1a1d2e;
+    --muted:     #5c6280;
+    --input-bg:  #f4f6ff;
+    --shadow:    0 4px 24px rgba(0,0,0,.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background .3s, color .3s;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .75rem 1.75rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar h1 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    color: var(--accent);
+  }
+  .topbar h1 span { color: var(--text); font-weight: 400; }
+
+  .toggle-btn {
+    cursor: pointer;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: .35rem .85rem;
+    font-size: .8rem;
+    color: var(--muted);
+    display: flex; align-items: center; gap: .45rem;
+    transition: background .2s;
+    user-select: none;
+  }
+  .toggle-btn:hover { background: var(--accent); color: #fff; }
+  .toggle-icon { font-size: 1rem; }
+
+  /* ── LAYOUT ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 310px 1fr;
+    gap: 0;
+    min-height: calc(100vh - 54px);
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 1.25rem 1.1rem;
+    overflow-y: auto;
+  }
+
+  .section-title {
+    font-size: .65rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 1.1rem 0 .55rem;
+    padding-bottom: .3rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  .field {
+    margin-bottom: .7rem;
+  }
+  .field label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: .78rem;
+    color: var(--muted);
+    margin-bottom: .28rem;
+  }
+  .field label .unit {
+    font-size: .7rem;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    padding: .1rem .42rem;
+    border-radius: 4px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .field input {
+    width: 100%;
+    padding: .48rem .65rem;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: .88rem;
+    transition: border .2s, box-shadow .2s;
+    outline: none;
+  }
+  .field input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(92,124,250,.18);
+  }
+
+  .calc-btn {
+    width: 100%;
+    margin-top: 1.1rem;
+    padding: .7rem;
+    background: var(--accent);
+    color: #fff;
+    font-size: .95rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    letter-spacing: .04em;
+    transition: opacity .2s, transform .1s;
+  }
+  .calc-btn:hover  { opacity: .88; }
+  .calc-btn:active { transform: scale(.98); }
+
+  #errorMsg {
+    margin-top: .6rem;
+    font-size: .78rem;
+    color: var(--accent2);
+    min-height: 1.1em;
+  }
+
+  /* ── MAIN ── */
+  .main {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .info-strip {
+    display: flex;
+    gap: .85rem;
+    flex-wrap: wrap;
+  }
+  .kpi {
+    flex: 1 1 140px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: .8rem 1.1rem;
+    box-shadow: var(--shadow);
+  }
+  .kpi .kpi-label { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+  .kpi .kpi-value { font-size: 1.35rem; font-weight: 700; color: var(--accent); margin-top: .15rem; }
+  .kpi .kpi-sub   { font-size: .68rem; color: var(--muted); margin-top: .1rem; }
+
+  .plot-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    padding: .5rem .5rem 0;
+    flex: 1;
+    min-height: 480px;
+  }
+  #plot { width: 100%; height: 480px; }
+
+  .hint {
+    font-size: .72rem;
+    color: var(--muted);
+    text-align: center;
+    padding: .5rem 0 .8rem;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 750px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ TOP BAR ═══════════════ -->
+<div class="topbar">
+  <h1>Two-Ray Ground Reflection &nbsp;<span>— Modelo de Dois Raios</span></h1>
+  <div class="toggle-btn" onclick="toggleTheme()">
+    <span class="toggle-icon" id="themeIcon">☀️</span>
+    <span id="themeLabel">Modo Claro</span>
+  </div>
+</div>
+
+<!-- ═══════════════ LAYOUT ═══════════════ -->
+<div class="layout">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <form id="modelForm" onsubmit="calcular(event)">
+
+      <p class="section-title">Equipamento</p>
+
+      <div class="field">
+        <label>Potência de transmissão (Pt) <span class="unit">dBm</span></label>
+        <input type="number" id="Pt" step="any" value="0" required>
+      </div>
+      <div class="field">
+        <label>Ganho do transmissor (Gt) <span class="unit">dB</span></label>
+        <input type="number" id="Gt" step="any" value="0" required>
+      </div>
+      <div class="field">
+        <label>Ganho do receptor (Gr) <span class="unit">dB</span></label>
+        <input type="number" id="Gr" step="any" value="0" required>
+      </div>
+      <div class="field">
+        <label>Altura do transmissor (ht) <span class="unit">m</span></label>
+        <input type="number" id="ht" step="any" value="30" required>
+      </div>
+      <div class="field">
+        <label>Altura do receptor (hr) <span class="unit">m</span></label>
+        <input type="number" id="hr" step="any" value="2" required>
+      </div>
+      <div class="field">
+        <label>Frequência (f) <span class="unit">Hz</span></label>
+        <input type="number" id="f" step="any" value="2.4e9" required>
+      </div>
+
+      <p class="section-title">Solo</p>
+
+      <div class="field">
+        <label>Permissividade elétrica (εr) <span class="unit">—</span></label>
+        <input type="number" id="eps" step="any" value="15" required>
+      </div>
+      <div class="field">
+        <label>Permeabilidade magnética (μr) <span class="unit">—</span></label>
+        <input type="number" id="mu" step="any" value="1" required>
+      </div>
+      <div class="field">
+        <label>Condutividade (σ) <span class="unit">S/m</span></label>
+        <input type="number" id="sigma" step="any" value="0.01" required>
+      </div>
+      <div class="field">
+        <label>Rugosidade (s) <span class="unit">m</span></label>
+        <input type="number" id="s" step="any" value="0.005" required>
+      </div>
+
+      <button class="calc-btn" type="submit">⚡ Calcular</button>
+      <div id="errorMsg"></div>
+    </form>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main class="main">
+
+    <!-- KPIs -->
+    <div class="info-strip">
+      <div class="kpi">
+        <div class="kpi-label">Comprimento de onda (λ)</div>
+        <div class="kpi-value" id="kpiLambda">—</div>
+        <div class="kpi-sub">metros</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Breakpoint (R)</div>
+        <div class="kpi-value" id="kpiR">—</div>
+        <div class="kpi-sub">metros</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Pr @ 1 m</div>
+        <div class="kpi-value" id="kpiPr1">—</div>
+        <div class="kpi-sub">dBm</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Pr @ breakpoint</div>
+        <div class="kpi-value" id="kpiPrR">—</div>
+        <div class="kpi-sub">dBm</div>
+      </div>
+    </div>
+
+    <!-- Gráfico -->
+    <div class="plot-card">
+      <div id="plot"></div>
+      <p class="hint">Zoom: scroll • Pan: clique e arraste • Hover: passe o mouse sobre a curva</p>
+    </div>
+
+  </main>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   TEMA CLARO / ESCURO
+═══════════════════════════════════════════════ */
+function toggleTheme() {
+  const html  = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('themeIcon').textContent  = isDark ? '🌙' : '☀️';
+  document.getElementById('themeLabel').textContent = isDark ? 'Modo Escuro' : 'Modo Claro';
+  if (window._lastPlotData) renderPlot(...window._lastPlotData);
+}
+
+/* ═══════════════════════════════════════════════
+   CÁLCULO DO MODELO
+═══════════════════════════════════════════════ */
+function calcular(e) {
+  e.preventDefault();
+  document.getElementById('errorMsg').textContent = '';
+
+  const Pt    = parseFloat(document.getElementById('Pt').value);
+  const Gt    = parseFloat(document.getElementById('Gt').value);
+  const Gr    = parseFloat(document.getElementById('Gr').value);
+  const ht    = parseFloat(document.getElementById('ht').value);
+  const hr    = parseFloat(document.getElementById('hr').value);
+  const f     = parseFloat(document.getElementById('f').value);
+  const eps   = parseFloat(document.getElementById('eps').value);
+  const s     = parseFloat(document.getElementById('s').value);
+
+  if ([Pt,Gt,Gr,ht,hr,f,eps,s].some(v => isNaN(v) || v <= 0 && v !== Pt && v !== Gt && v !== Gr)) {
+    document.getElementById('errorMsg').textContent = 'Verifique os valores inseridos.';
+    return;
+  }
+
+  const c      = 3e8;
+  const lambda = c / f;
+  const R      = 4 * ht * hr / lambda;
+
+  const n = 2000;
+  const d = Array.from({length: n}, (_, i) => 1 + (999 / (n - 1)) * i);  // 1…1000 m
+
+  const d1 = d.map(di => Math.sqrt(di*di + Math.pow(ht - hr, 2)));
+  const d2 = d.map(di => Math.sqrt(di*di + Math.pow(ht + hr, 2)));
+  const cosT = d2.map(v => (ht + hr) / v);
+
+  // Fresnel (Eq 3.4)
+  const sqrtT  = cosT.map(ct => Math.sqrt(Math.max(eps - Math.pow(Math.sin(Math.acos(ct)), 2), 0)));
+  const rhoEf  = cosT.map((ct, i) => (eps*ct - sqrtT[i]) / (eps*ct + sqrtT[i]));
+
+  // Rugosidade Rayleigh (Eq 3.5)
+  const Gamma  = rhoEf.map((re, i) => re * Math.exp(-Math.pow((4*Math.PI*s*cosT[i]) / lambda, 2)));
+
+  // Ganho multi-percurso (Eq 3.6)
+  const F = Gamma.map((g, i) =>
+    1 + g*g + 2*g*Math.cos(2*Math.PI*(d2[i] - d1[i]) / lambda)
+  );
+
+  // Potência recebida (Eq 3.7)
+  const Pr = d.map((di, i) =>
+    Pt + Gt + Gr + 20*Math.log10(lambda/(4*Math.PI*di)) + 10*Math.log10(F[i])
+  );
+
+  // KPIs
+  const idx_R  = d.findIndex(di => di >= R);
+  const prAtR  = idx_R >= 0 ? Pr[idx_R] : Pr[Pr.length - 1];
+
+  document.getElementById('kpiLambda').textContent = lambda.toExponential(3);
+  document.getElementById('kpiR').textContent      = R.toFixed(1);
+  document.getElementById('kpiPr1').textContent    = Pr[0].toFixed(2);
+  document.getElementById('kpiPrR').textContent    = prAtR.toFixed(2);
+
+  window._lastPlotData = [d, Pr, R];
+  renderPlot(d, Pr, R);
+}
+
+/* ═══════════════════════════════════════════════
+   GRÁFICO PLOTLY
+═══════════════════════════════════════════════ */
+function renderPlot(d, Pr, R) {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+  const paperBg  = dark ? '#22263a' : '#ffffff';
+  const plotBg   = dark ? '#1a1d27' : '#f8f9ff';
+  const gridClr  = dark ? '#2e3350' : '#dde1f5';
+  const textClr  = dark ? '#e8eaf6' : '#1a1d2e';
+  const lineClr  = dark ? '#5c7cfa' : '#3b5bdb';
+
+  const prMin = Math.min(...Pr);
+  const prMax = Math.max(...Pr);
+
+  const trace = {
+    x: d, y: Pr,
+    mode: 'lines',
+    name: 'Pr (dBm)',
+    line: { color: lineClr, width: 2.2 },
+    hovertemplate: '<b>d</b>: %{x:.1f} m<br><b>Pr</b>: %{y:.2f} dBm<extra></extra>'
+  };
+
+  const layout = {
+    paper_bgcolor: paperBg,
+    plot_bgcolor:  plotBg,
+    margin: { l: 60, r: 30, t: 40, b: 50 },
+    title: {
+      text: 'Potência Recebida vs Distância',
+      font: { color: textClr, size: 15, family: 'Segoe UI, sans-serif' }
+    },
+    xaxis: {
+      title: { text: 'Distância d (m)', font: {color: textClr} },
+      type: 'log',
+      tickcolor: gridClr, gridcolor: gridClr,
+      tickfont: {color: textClr}, showgrid: true
+    },
+    yaxis: {
+      title: { text: 'Pr (dBm)', font: {color: textClr} },
+      tickcolor: gridClr, gridcolor: gridClr,
+      tickfont: {color: textClr}, showgrid: true
+    },
+    shapes: [{
+      type: 'line',
+      x0: R, x1: R, xref: 'x',
+      y0: prMin, y1: prMax,  yref: 'y',
+      line: { color: '#f03e3e', dash: 'dash', width: 2 }
+    }],
+    annotations: [{
+      x: Math.log10(R), xref: 'x',
+      y: prMax, yref: 'y',
+      text: `<b>Breakpoint</b><br>${R.toFixed(1)} m`,
+      showarrow: true, arrowcolor: '#f03e3e', arrowhead: 2, ax: 50, ay: -30,
+      font: { color: '#f03e3e', size: 11 },
+      bgcolor: paperBg, bordercolor: '#f03e3e', borderwidth: 1, borderpad: 4
+    }],
+    legend: {
+      x: 0.01, y: 0.01,
+      bgcolor: dark ? 'rgba(26,29,39,.8)' : 'rgba(255,255,255,.85)',
+      bordercolor: gridClr, borderwidth: 1,
+      font: { color: textClr }
+    }
+  };
+
+  const config = {
+    responsive: true,
+    displayModeBar: true,
+    modeBarButtonsToRemove: ['select2d','lasso2d','autoScale2d'],
+    displaylogo: false
+  };
+
+  Plotly.newPlot('plot', [trace], layout, config);
+}
+</script>
+</body>
+</html>
