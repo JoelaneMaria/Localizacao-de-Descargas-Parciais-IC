@@ -1,0 +1,71 @@
+.plot-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 0;
+  flex: 1;
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Tab bar */
+.tab-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.tab-btn:hover {
+  background: var(--input-bg);
+  color: var(--text);
+}
+
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: var(--input-bg);
+}
+
+/* Plot area */
+.plot-area {
+  flex: 1;
+  min-height: 480px;
+  padding: 0.5rem;
+}
+
+.plot-container {
+  width: 100%;
+  height: 480px;
+}
+
+.plot-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 480px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.hint {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: center;
+  padding: 0.5rem 0 0.8rem;
+}
