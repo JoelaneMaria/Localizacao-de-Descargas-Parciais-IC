@@ -36,7 +36,7 @@ export default function Sidebar({
           unit="dBm"
           value={params.Pt}
           onChange={(v) => onParamChange('Pt', v)}
-          tooltip="P do sinal entregue à antena transmissora, em dBm. Valores típicos variam de 0 dBm (1 mW) a 30 dBm (1 W)."
+          tooltip="Potência do sinal entregue à antena transmissora, em dBm. Valores típicos variam de 0 dBm (1 mW) a 30 dBm (1 W)."
         />
         <ParameterInput
           id="Gt"
@@ -104,7 +104,7 @@ export default function Sidebar({
           unit="S/m"
           value={params.sigma}
           onChange={(v) => onParamChange('sigma', v)}
-          tooltip="Condutividade elétrica do solo em Siemens/metro."
+          tooltip="Condutividade elétrica do solo em Siemens/metro. Este parâmetro é mantido para extensões futuras e não é utilizado nas equações atuais."
         />
         <ParameterInput
           id="s"
