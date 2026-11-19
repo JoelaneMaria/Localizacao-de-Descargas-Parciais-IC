@@ -14,23 +14,18 @@
 
 const C = 3e8; // Speed of light (m/s)
 
-/**
- * Convert dBm to watts.
- */
+/** Convert dBm to watts. */
 export function dbmToWatts(dBm) {
   return Math.pow(10, (dBm - 30) / 10);
 }
 
-/**
- * Convert watts to dBm. Returns -Infinity for P <= 0.
- */
+/** Convert watts to dBm. Returns -Infinity for P <= 0. */
 export function wattsToDbm(watts) {
   if (watts <= 0) return -Infinity;
   return 10 * Math.log10(watts) + 30;
 }
 
-/**
- * Calculate wavelength from frequency.
+/** Calculate wavelength from frequency.
  * @param {number} f - Frequency in Hz
  * @returns {number} Wavelength in meters
  */
@@ -38,8 +33,7 @@ export function calcWavelength(f) {
   return C / f;
 }
 
-/**
- * Calculate breakpoint distance.
+/** Calculate breakpoint distance.
  * R_b = 4 * ht * hr / lambda
  * NO pi factor — this is an explicit project requirement.
  *
@@ -64,27 +58,31 @@ export function calcBreakpoint(ht, hr, lambda) {
  * @param {number} params.f    - Frequency (Hz)
  * @param {number} params.eps  - Relative permittivity
  * @param {number} params.s    - Surface roughness (m)
+ * @param {number} params.n    - Propagation exponent (default 2)
  * @param {number[]} distances - Array of distances (m)
  * @returns {object} { lambda, breakpoint, Pr[], F[], rhoEf[], Gamma[], d1[], d2[], cosT[] }
  */
 export function calcTwoRayModel(params, distances) {
-  const { Pt, Gt, Gr, ht, hr, f, eps, s } = params;
+  const { Pt, Gt, Gr, ht, hr, f, eps, s, n } = params;
 
   const lambda = calcWavelength(f);
   const breakpoint = calcBreakpoint(ht, hr, lambda);
 
-  const n = distances.length;
+  const m = distances.length;
 
-  // Pre-allocate arrays
-  const d1 = new Array(n);
-  const d2 = new Array(n);
-  const cosT = new Array(n);
-  const rhoEf = new Array(n);
-  const Gamma = new Array(n);
-  const F = new Array(n);
-  const Pr = new Array(n);
+  // Pre‑allocate arrays
+  const d1 = new Array(m);
+  const d2 = new Array(m);
+  const cosT = new Array(m);
+  const rhoEf = new Array(m);
+  const Gamma = new Array(m);
+  const F = new Array(m);
+  const Pr = new Array(m);
 
-  for (let i = 0; i < n; i++) {
+  // constant term for free‑space loss (independent of distance)
+  const constFs = 20 * Math.log10(lambda / (4 * Math.PI));
+
+  for (let i = 0; i < m; i++) {
     const di = distances[i];
 
     // Direct and reflected path lengths
@@ -103,17 +101,18 @@ export function calcTwoRayModel(params, distances) {
     Gamma[i] = rhoEf[i] * Math.exp(-Math.pow((4 * Math.PI * s * cosT[i]) / lambda, 2));
 
     // Multipath gain factor (Eq 3.6)
-    F[i] = 1 + Gamma[i] * Gamma[i] + 2 * Gamma[i] * Math.cos(2 * Math.PI * (d2[i] - d1[i]) / lambda);
+    F[i] = 1 + Gamma[i] * Gamma[i] + 2 * Gamma[i] *
+           Math.cos(2 * Math.PI * (d2[i] - d1[i]) / lambda);
 
-    // Received power in dBm (Eq 3.7)
-    Pr[i] = Pt + Gt + Gr + 20 * Math.log10(lambda / (4 * Math.PI * di)) + 10 * Math.log10(F[i]);
+    // Received power in dBm (modified Eq 3.7 with propagation exponent n)
+    const pathLoss = constFs - 10 * n * Math.log10(di);
+    Pr[i] = Pt + Gt + Gr + pathLoss + 10 * Math.log10(F[i]);
   }
 
   return { lambda, breakpoint, Pr, F, rhoEf, Gamma, d1, d2, cosT };
 }
 
-/**
- * Generate default distance array (1 to 1000 m, 2000 points) matching original.
+/** Generate default distance array (1 to 1000 m, 2000 points) matching original.
  * @param {number} [start=1] - Start distance (m)
  * @param {number} [end=1000] - End distance (m)
  * @param {number} [n=2000] - Number of points
@@ -146,8 +145,7 @@ export function calcTwoRayVsHeight(params, fixedDistance, heights) {
   return { Pr, F, heights };
 }
 
-/**
- * Generate array of transmitter heights for the second graph.
+/** Generate array of transmitter heights for the second graph.
  * @param {number} [min=1] - Minimum height (m)
  * @param {number} [max=100] - Maximum height (m)
  * @param {number} [n=500] - Number of points
@@ -186,11 +184,9 @@ export function calcUncertaintyBands(PrDbm, uncertaintyPercent) {
   return { lower, upper };
 }
 
-/**
- * Default model parameters matching the original HTML file.
- */
+/** Default model parameters matching the original HTML file. */
 export const DEFAULT_PARAMS = {
-  n: 2, // expoente de propagação (padrão 2)
+  n: 2,               // expoente de propagação (padrão 2)
 
   Pt: 0,       // dBm
   Gt: 0,       // dB
