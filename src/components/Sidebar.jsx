@@ -31,7 +31,7 @@ export default function Sidebar({
         <p className="section-title">Equipamento</p>
 
         <ParameterInput
-          id="Pt"
+          id="Pteste"
           label="Potência de transmissão (Pt)"
           unit="dBm"
           value={params.Pt}
