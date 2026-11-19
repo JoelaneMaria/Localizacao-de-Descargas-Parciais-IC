@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ParameterInput from './ParameterInput';
 import './Sidebar.css';
 
@@ -21,6 +21,53 @@ export default function Sidebar({
   const handleSubmit = (e) => {
     e.preventDefault();
     onCalculate();
+  };
+
+  // ---- Expoente de propagação (n) ----
+  const [nMode, setNMode] = useState('reference'); // 'reference' ou 'custom'
+  const [selectedEnv, setSelectedEnv] = useState('open');
+
+  const envOptions = [
+    { key: 'open', label: 'Espaço aberto', value: 2 },
+    { key: 'vision', label: 'Construção com linha de visão', min: 1.6, max: 1.8 },
+    { key: 'warehouse', label: 'Armazém', value: 1.8 },
+    { key: 'paper', label: 'Fábrica de papel/cereais', value: 1.8 },
+    { key: 'conference', label: 'Sala de conferência típica (15 × 7,6 m), com mesas e cadeiras', value: 2.09 },
+    { key: 'supermarket', label: 'Supermercado', value: 2.2 },
+    { key: 'factory_noLOS', label: 'Fábrica sem linha de visão', min: 2, max: 3 },
+    { key: 'residential', label: 'Ambiente residencial', value: 2.8 },
+    { key: 'office_noLOS', label: 'Prédio de escritórios sem linha de visão', min: 2.7, max: 4.3 },
+  ];
+
+  const currentEnv = envOptions.find((e) => e.key === selectedEnv);
+  const isRange = currentEnv && typeof currentEnv.min === 'number';
+
+  const handleEnvChange = (e) => {
+    const key = e.target.value;
+    setSelectedEnv(key);
+    const env = envOptions.find((x) => x.key === key);
+    if (env) {
+      const val = typeof env.value === 'number' ? env.value : env.min; // para ranges, pega o minimo
+      onParamChange('n', val);
+    }
+  };
+
+  const handleCustomNChange = (e) => {
+    const v = parseFloat(e.target.value);
+    if (!isNaN(v)) onParamChange('n', v);
+  };
+
+  const handleNModeChange = (e) => {
+    const mode = e.target.value;
+    setNMode(mode);
+    if (mode === 'reference') {
+      // quando volta ao modo de referência, garante que o valor reflita o ambiente selecionado
+      const env = envOptions.find((x) => x.key === selectedEnv);
+      if (env) {
+        const val = typeof env.value === 'number' ? env.value : env.min;
+        onParamChange('n', val);
+      }
+    }
   };
 
   return (
@@ -115,6 +162,68 @@ export default function Sidebar({
           tooltip="Desvio padrão da altura das irregularidades do terreno. Utilizado no critério de rugosidade de Rayleigh para atenuar o coeficiente de reflexão."
         />
 
+        {/* ── Propagation Exponent (n) ── */}
+        <p className="section-title">Expoente de propagação (n)</p>
+
+        {/* modo de escolha */}
+        <div className="field">
+          <label>
+            <span className="field-label-text">Modo</span>
+          </label>
+          <div>
+            <label>
+              <input
+                type="radio"
+                name="nMode"
+                value="reference"
+                checked={nMode === 'reference'}
+                onChange={handleNModeChange}
+              />
+              Selecionar ambiente
+            </label>
+            <label style={{ marginLeft: '0.8rem' }}>
+              <input
+                type="radio"
+                name="nMode"
+                value="custom"
+                checked={nMode === 'custom'}
+                onChange={handleNModeChange}
+              />
+              Personalizado
+            </label>
+          </div>
+        </div>
+
+        {/* lista de ambientes (apenas quando mode = reference) */}
+        {nMode === 'reference' && (
+          <div className="field">
+            <label htmlFor="envSelect">
+              <span className="field-label-text">Ambiente</span>
+            </label>
+            <select id="envSelect" value={selectedEnv} onChange={handleEnvChange}>
+              {envOptions.map((e) => (
+                <option key={e.key} value={e.key}>
+                  {e.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* campo livre (apenas quando mode = custom) */}
+        {nMode === 'custom' && (
+          <ParameterInput
+            id="nCustom"
+            label="Expoente n"
+            unit="—"
+            value={params.n}
+            onChange={handleCustomNChange}
+            step="any"
+            min={isRange ? currentEnv.min : undefined}
+            max={isRange ? currentEnv.max : undefined}
+          />
+        )}
+
         {/* ── Uncertainty ── */}
         <p className="section-title">Incerteza</p>
 
@@ -134,7 +243,6 @@ export default function Sidebar({
         {activeTab === 'height' && (
           <>
             <p className="section-title">Configuração — Gráfico por Altura</p>
-
             <ParameterInput
               id="fixedDistance"
               label="Distância fixa do enlace"
