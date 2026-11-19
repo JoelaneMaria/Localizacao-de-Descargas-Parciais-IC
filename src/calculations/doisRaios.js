@@ -1,3 +1,4 @@
+
 /**
  * Two-Ray Ground Reflection Model — Core Calculations
  *
@@ -5,10 +6,12 @@
  * of the reference dissertation.
  *
  * Complex numbers are represented internally as { re, im }.
+ *
+ * Received power is expressed in dB, referenced to 1 W.
  */
 
-const C = 3e8; // Speed of light (m/s)
-const EPS0 = 8.8541878128e-12; // Vacuum permittivity (F/m)
+const C = 3e8;
+const EPS0 = 8.8541878128e-12;
 
 // Minimal complex-number helpers: z = { re, im }.
 function cAdd(a, b) {
@@ -38,7 +41,6 @@ function cDiv(a, b) {
 }
 
 function cSqrt(z) {
-  // Principal complex square root.
   const magnitude = Math.hypot(z.re, z.im);
   const re = Math.sqrt(Math.max((magnitude + z.re) / 2, 0));
   const imMagnitude = Math.sqrt(Math.max((magnitude - z.re) / 2, 0));
@@ -61,7 +63,7 @@ export function dbmToWatts(dBm) {
 }
 
 /**
- * Convert watts to dBm. Returns -Infinity for P <= 0.
+ * Convert watts to dBm.
  */
 export function wattsToDbm(watts) {
   if (watts <= 0) return -Infinity;
@@ -69,9 +71,15 @@ export function wattsToDbm(watts) {
 }
 
 /**
+ * Convert watts to dB, referenced to 1 W.
+ */
+export function wattsToDb(watts) {
+  if (watts <= 0) return -Infinity;
+  return 10 * Math.log10(watts);
+}
+
+/**
  * Calculate wavelength from frequency.
- * @param {number} f - Frequency in Hz
- * @returns {number} Wavelength in meters
  */
 export function calcWavelength(f) {
   return C / f;
@@ -79,23 +87,13 @@ export function calcWavelength(f) {
 
 /**
  * Calculate breakpoint distance.
- * Eq. 3.1: R_b = 4 * ht * hr / lambda
  */
 export function calcBreakpoint(ht, hr, lambda) {
   return (4 * ht * hr) / lambda;
 }
 
 /**
- * Calculate the complex Fresnel reflection coefficient for parallel
- * polarization using Eqs. 3.3 and 3.4.
- *
- * eps and mu are relative permittivity and permeability.
- * sigma is conductivity in S/m.
- *
- * q = (k2/k1)^2 = eps*mu - j*sigma*mu/(omega*eps0)
- *
- * The principal complex square root is used, consistent with a passive
- * lossy medium and the -j conductivity convention in Eq. 3.4.
+ * Calculate the complex Fresnel reflection coefficient.
  */
 function calcFresnelCoefficient(cosTheta, eps, mu, sigma, omega) {
   const sinSquared = Math.max(0, 1 - cosTheta * cosTheta);
@@ -117,24 +115,10 @@ function calcFresnelCoefficient(cosTheta, eps, mu, sigma, omega) {
 /**
  * Calculate the Two-Ray model for a set of horizontal separations.
  *
- * @param {object} params
- * @param {number} params.Pt   - Transmitted power (dBm)
- * @param {number} params.Gt   - Transmitter gain (dB)
- * @param {number} params.Gr   - Receiver gain (dB)
- * @param {number} params.ht   - Transmitter height (m)
- * @param {number} params.hr   - Receiver height (m)
- * @param {number} params.f    - Frequency (Hz)
- * @param {number} params.eps  - Relative permittivity
- * @param {number} params.mu   - Relative permeability
- * @param {number} params.sigma - Conductivity (S/m)
- * @param {number} params.s    - Surface roughness (m)
- * @param {number[]} distances - Horizontal separations (m)
+ * Pt: transmitted power in dBm (input)
+ * Gt, Gr: antenna gains in dB
  *
- * @returns {object} { lambda, breakpoint, Pr[], F[], rhoEf[], Gamma[],
- *                     d1[], d2[], cosT[] }
- *
- * F is retained as the real power interference factor |1 + Gamma*phase|^2.
- * rhoEf and Gamma are complex values represented as { re, im }.
+ * Pr: received power in dB, referenced to 1 W (output)
  */
 export function calcTwoRayModel(params, distances) {
   const {
@@ -166,11 +150,12 @@ export function calcTwoRayModel(params, distances) {
     // Incidence angle measured from the surface normal.
     cosT[i] = (ht + hr) / d2[i];
 
-    // Eq. 3.3/3.4: complex Fresnel coefficient.
-    rhoEf[i] = calcFresnelCoefficient(cosT[i], eps, mu, sigma, omega);
+    // Complex Fresnel coefficient.
+    rhoEf[i] = calcFresnelCoefficient(
+      cosT[i], eps, mu, sigma, omega
+    );
 
-    // Eq. 3.5: Rayleigh roughness factor.
-    // The complementary angle gives sin(gamma) = cos(theta_i).
+    // Rayleigh roughness factor.
     const roughnessFactor = Math.exp(
       -8 * ((Math.PI * s * cosT[i]) / lambda) ** 2
     );
@@ -178,33 +163,37 @@ export function calcTwoRayModel(params, distances) {
     // Effective complex reflection coefficient.
     Gamma[i] = cScale(rhoEf[i], roughnessFactor);
 
-    // Eq. 3.6: F = 1 + Gamma * exp(-j*phase).
+    // Interference factor.
     const phase = (2 * Math.PI * (d2[i] - d1[i])) / lambda;
+
     const reflectedPhasor = cMul(Gamma[i], {
       re: Math.cos(phase),
       im: -Math.sin(phase),
     });
-    const totalField = cAdd({ re: 1, im: 0 }, reflectedPhasor);
 
-    // Eq. 3.7 uses the squared magnitude of the total field.
+    const totalField = cAdd(
+      { re: 1, im: 0 },
+      reflectedPhasor
+    );
+
     F[i] = cAbsSquared(totalField);
 
-    // Eq. 3.7 in dBm. R is the direct transmitter-receiver separation d1.
-    // Pt is in dBm and antenna gains are in dB, so their logarithmic
-    // contributions are added directly.
+    // Received power in dB, referenced to 1 W.
+    // Pt is originally in dBm, so subtract 30 dB.
     Pr[i] =
       Pt +
       Gt +
       Gr +
       20 * Math.log10(lambda / (4 * Math.PI * d1[i])) +
-      10 * Math.log10(F[i]);
+      10 * Math.log10(F[i]) -
+      30;
   }
 
   return { lambda, breakpoint, Pr, F, rhoEf, Gamma, d1, d2, cosT };
 }
 
 /**
- * Generate default distance array (1 to 1000 m, 2000 points).
+ * Generate default distance array.
  */
 export function generateDistances(start = 1, end = 1000, n = 2000) {
   return Array.from(
@@ -214,7 +203,7 @@ export function generateDistances(start = 1, end = 1000, n = 2000) {
 }
 
 /**
- * Calculate received power for varying transmitter heights at a fixed distance.
+ * Calculate received power for varying transmitter heights.
  */
 export function calcTwoRayVsHeight(params, fixedDistance, heights) {
   const count = heights.length;
@@ -232,7 +221,7 @@ export function calcTwoRayVsHeight(params, fixedDistance, heights) {
 }
 
 /**
- * Generate array of transmitter heights for the second graph.
+ * Generate array of transmitter heights.
  */
 export function generateHeights(min = 1, max = 100, n = 500) {
   return Array.from(
@@ -242,40 +231,47 @@ export function generateHeights(min = 1, max = 100, n = 500) {
 }
 
 /**
- * Apply relative uncertainty to received power values.
- * Uncertainty is applied in watts (linear domain), then converted to dBm.
+ * Apply relative uncertainty in watts,
+ * then convert the limits to dB (reference: 1 W).
+ *
+ * Input PrDb must be in dB referenced to 1 W.
  */
-export function calcUncertaintyBands(PrDbm, uncertaintyPercent) {
+export function calcUncertaintyBands(PrDb, uncertaintyPercent) {
   if (uncertaintyPercent <= 0) {
     return { lower: null, upper: null };
   }
 
   const u = uncertaintyPercent / 100;
-  const count = PrDbm.length;
+  const count = PrDb.length;
   const lower = new Array(count);
   const upper = new Array(count);
 
   for (let i = 0; i < count; i++) {
-    const PrWatts = dbmToWatts(PrDbm[i]);
-    lower[i] = wattsToDbm(PrWatts * (1 - u));
-    upper[i] = wattsToDbm(PrWatts * (1 + u));
+    // Convert dB (ref. 1 W) to watts.
+    const PrWatts = Math.pow(10, PrDb[i] / 10);
+
+    // Apply relative uncertainty in the linear domain.
+    lower[i] = wattsToDb(PrWatts * (1 - u));
+    upper[i] = wattsToDb(PrWatts * (1 + u));
   }
 
   return { lower, upper };
 }
 
 /**
- * Default model parameters matching the original interface.
+ * Default model parameters.
+ *
+ * Pt remains in dBm as an input parameter.
  */
 export const DEFAULT_PARAMS = {
-  Pt: 0,       // dBm
-  Gt: 0,       // dB
-  Gr: 0,       // dB
-  ht: 30,      // m
-  hr: 2,       // m
-  f: 2.4e9,    // Hz
-  eps: 15,     // relative permittivity
-  mu: 1,       // relative permeability
-  sigma: 0.01, // electrical conductivity (S/m)
-  s: 0.005,    // surface roughness (m)
+  Pt: 0,
+  Gt: 0,
+  Gr: 0,
+  ht: 30,
+  hr: 2,
+  f: 2.4e9,
+  eps: 15,
+  mu: 1,
+  sigma: 0.01,
+  s: 0.005,
 };
