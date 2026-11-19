@@ -32,11 +32,11 @@ export default function Sidebar({
 
         <ParameterInput
           id="Pt"
-          label="Potência de transmissão (Pteste)"
+          label="Potência de transmissão (Pt)"
           unit="dBm"
           value={params.Pt}
           onChange={(v) => onParamChange('Pt', v)}
-          tooltip="Potência do sinal entregue à antena transmissora, em dBm. Valores típicos variam de 0 dBm (1 mW) a 30 dBm (1 W)."
+          tooltip="P do sinal entregue à antena transmissora, em dBm. Valores típicos variam de 0 dBm (1 mW) a 30 dBm (1 W)."
         />
         <ParameterInput
           id="Gt"
