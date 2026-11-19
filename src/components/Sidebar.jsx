@@ -31,8 +31,8 @@ export default function Sidebar({
         <p className="section-title">Equipamento</p>
 
         <ParameterInput
-          id="Pteste"
-          label="Potência de transmissão (Pt)"
+          id="Pt"
+          label="Potência de transmissão (Pteste)"
           unit="dBm"
           value={params.Pt}
           onChange={(v) => onParamChange('Pt', v)}
