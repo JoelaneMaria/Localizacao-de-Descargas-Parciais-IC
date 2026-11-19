@@ -30,7 +30,7 @@ export default function Sidebar({
   const envOptions = [
     { key: 'open', label: 'Espaço aberto', value: 2 },
     { key: 'vision', label: 'Construção com linha de visão', min: 1.6, max: 1.8 },
-    { key: 'warehouse', label: 'Armazém', value: 1.8 },
+    { key: 'warehouse', label: 'Armazém', value: 1.8 }, 
     { key: 'paper', label: 'Fábrica de papel/cereais', value: 1.8 },
     { key: 'conference', label: 'Sala de conferência típica (15 × 7,6 m), com mesas e cadeiras', value: 2.09 },
     { key: 'supermarket', label: 'Supermercado', value: 2.2 },
