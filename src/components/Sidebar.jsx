@@ -104,7 +104,7 @@ export default function Sidebar({
           unit="S/m"
           value={params.sigma}
           onChange={(v) => onParamChange('sigma', v)}
-          tooltip="Condutividade elétrica do solo em Siemens/metro. Este parâmetro é mantido para extensões futuras e não é utilizado nas equações atuais."
+          tooltip="Condutividade elétrica do solo em Siemens/metro."
         />
         <ParameterInput
           id="s"
