@@ -62,6 +62,7 @@ export function calcBreakpoint(ht, hr, lambda) {
  * @param {number[]} distances - Array of distances (m)
  * @returns {object} { lambda, breakpoint, Pr[], F[], rhoEf[], Gamma[], d1[], d2[], cosT[] }
  */
+--- START ---
 export function calcTwoRayModel(params, distances) {
   const { Pt, Gt, Gr, ht, hr, f, eps, s, n } = params;
 
@@ -79,39 +80,39 @@ export function calcTwoRayModel(params, distances) {
   const F = new Array(m);
   const Pr = new Array(m);
 
-  // constant term for free‑space loss (independent of distance)
+  // constante de perda de espaço livre (independente da distância)
   const constFs = 20 * Math.log10(lambda / (4 * Math.PI));
 
   for (let i = 0; i < m; i++) {
     const di = distances[i];
 
-    // Direct and reflected path lengths
+    // Comprimentos dos caminhos direto e refletido
     d1[i] = Math.sqrt(di * di + Math.pow(ht - hr, 2));
     d2[i] = Math.sqrt(di * di + Math.pow(ht + hr, 2));
 
-    // Cosine of incidence angle (grazing angle from the ground)
+    // Ângulo de incidência (grazing angle)
     cosT[i] = (ht + hr) / d2[i];
 
-    // Fresnel reflection coefficient (Eq 3.4)
+    // Coeficiente de reflexão de Fresnel (Eq 3.4)
     const sinT = Math.sin(Math.acos(cosT[i]));
     const sqrtTerm = Math.sqrt(Math.max(eps - sinT * sinT, 0));
     rhoEf[i] = (eps * cosT[i] - sqrtTerm) / (eps * cosT[i] + sqrtTerm);
 
-    // Rayleigh roughness attenuation (Eq 3.5)
+    // Atenuação por rugosidade (Eq 3.5)
     Gamma[i] = rhoEf[i] * Math.exp(-Math.pow((4 * Math.PI * s * cosT[i]) / lambda, 2));
 
-    // Multipath gain factor (Eq 3.6)
+    // Ganho multipath (Eq 3.6)
     F[i] = 1 + Gamma[i] * Gamma[i] + 2 * Gamma[i] *
            Math.cos(2 * Math.PI * (d2[i] - d1[i]) / lambda);
 
-    // Received power in dBm (modified Eq 3.7 with propagation exponent n)
+    // Potência recebida (nova Eq 3.7 com expoente n)
     const pathLoss = constFs - 10 * n * Math.log10(di);
     Pr[i] = Pt + Gt + Gr + pathLoss + 10 * Math.log10(F[i]);
   }
 
   return { lambda, breakpoint, Pr, F, rhoEf, Gamma, d1, d2, cosT };
 }
-
+--- END ---
 /** Generate default distance array (1 to 1000 m, 2000 points) matching original.
  * @param {number} [start=1] - Start distance (m)
  * @param {number} [end=1000] - End distance (m)
