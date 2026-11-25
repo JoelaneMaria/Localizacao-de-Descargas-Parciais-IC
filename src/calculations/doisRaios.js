@@ -64,7 +64,7 @@ export function calcBreakpoint(ht, hr, lambda) {
  */
 
 export function calcTwoRayModel(params, distances) {
-  const { Pt, Gt, Gr, ht, hr, f, eps, s, n } = params;
+  const { Pt, Gt, Gr, ht, hr, f, eps, s } = params;
 
   const lambda = calcWavelength(f);
   const breakpoint = calcBreakpoint(ht, hr, lambda);
@@ -106,7 +106,7 @@ export function calcTwoRayModel(params, distances) {
            Math.cos(2 * Math.PI * (d2[i] - d1[i]) / lambda);
 
     // Potência recebida (nova Eq 3.7 com expoente n)
-    const pathLoss = constFs - 10 * n * Math.log10(di);
+    const pathLoss = constFs - 10 * Math.log10(di);
     Pr[i] = Pt + Gt + Gr + pathLoss + 10 * Math.log10(F[i]);
   }
 
