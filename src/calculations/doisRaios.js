@@ -200,3 +200,4 @@ export const DEFAULT_PARAMS = {
   sigma: 0.01, // electrical conductivity S/m (unused in current equations)
   s: 0.005,    // surface roughness (m)
 };
+
