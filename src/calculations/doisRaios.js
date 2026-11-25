@@ -62,7 +62,7 @@ export function calcBreakpoint(ht, hr, lambda) {
  * @param {number[]} distances - Array of distances (m)
  * @returns {object} { lambda, breakpoint, Pr[], F[], rhoEf[], Gamma[], d1[], d2[], cosT[] }
  */
---- START ---
+
 export function calcTwoRayModel(params, distances) {
   const { Pt, Gt, Gr, ht, hr, f, eps, s, n } = params;
 
@@ -112,7 +112,7 @@ export function calcTwoRayModel(params, distances) {
 
   return { lambda, breakpoint, Pr, F, rhoEf, Gamma, d1, d2, cosT };
 }
---- END ---
+
 /** Generate default distance array (1 to 1000 m, 2000 points) matching original.
  * @param {number} [start=1] - Start distance (m)
  * @param {number} [end=1000] - End distance (m)
