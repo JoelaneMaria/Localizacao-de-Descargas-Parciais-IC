@@ -28,7 +28,6 @@
   font-weight: 600;
   white-space: nowrap;
   flex-shrink: 0;
-  margin-left: 0.4rem;   /* <-- espaçamento adicional */
 }
 
 .field input {
