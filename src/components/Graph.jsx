@@ -46,7 +46,7 @@ function DistanceGraph({ distances, Pr, breakpoint, uncertainty, dark }) {
       x: distances,
       y: Pr,
       mode: 'lines',
-      name: 'Potência recebida (dB ref. 1 W)',
+      name: 'Potência recebida (dBm)',
       line: { color: colors.lineClr, width: 2.2 },
       hovertemplate:
         '<b>Distância</b>: %{x:.1f} m<br><b>Pr</b>: %{y:.2f} dBm<extra></extra>',
@@ -77,7 +77,7 @@ function DistanceGraph({ distances, Pr, breakpoint, uncertainty, dark }) {
         showgrid: true,
       },
       yaxis: {
-        title: { text: 'Potência recebida (dB ref. 1 W)', font: { color: colors.textClr } },
+        title: { text: 'Potência recebida (dBm)', font: { color: colors.textClr } },
         tickcolor: colors.gridClr,
         gridcolor: colors.gridClr,
         tickfont: { color: colors.textClr },
@@ -169,7 +169,7 @@ function HeightGraph({ heights, Pr, uncertainty, dark }) {
       x: Pr,
       y: heights,
       mode: 'lines',
-      name: 'Potência recebida (dB ref. 1 W)',
+      name: 'Potência recebida (dBm)',
       line: { color: colors.lineClr, width: 2.2 },
       hovertemplate:
         '<b>ht</b>: %{y:.1f} m<br><b>Pr</b>: %{x:.2f} dBm<extra></extra>',
@@ -189,7 +189,7 @@ function HeightGraph({ heights, Pr, uncertainty, dark }) {
         font: { color: colors.textClr, size: 15, family: 'Segoe UI, sans-serif' },
       },
       xaxis: {
-        title: { text: 'Potência recebida (dB ref. 1 W)', font: { color: colors.textClr } },
+        title: { text: 'Potência recebida (dBm)', font: { color: colors.textClr } },
         tickcolor: colors.gridClr,
         gridcolor: colors.gridClr,
         tickfont: { color: colors.textClr },
