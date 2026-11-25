@@ -1,5 +1,5 @@
 /**
- * Two-Ray Ground Reflection Model — Core Calculations
+ * Two-Ray  Ground Reflection Model — Core Calculations
  *
  * All equations strictly follow the original implementation.
  * Equation references correspond to the original project documentation.
