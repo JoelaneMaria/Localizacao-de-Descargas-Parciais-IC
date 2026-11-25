@@ -3,7 +3,7 @@
  *
  * All equations strictly follow the original implementation.
  * Equation references correspond to the original project documentation.
- *
+ * 
  * IMPORTANT: The breakpoint formula is  R_b = 4 * ht * hr / lambda  (no pi).
  *
  * Unused parameters in the original equations:
