@@ -50,3 +50,143 @@
   min-height: 1.1em;
 }
 
+/* Sidebar navigation tabs */
+.sidebar-tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1.2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-tab {
+  flex: 1;
+  padding: 0.7rem 0.35rem;
+  background: transparent;
+  color: var(--muted);
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.sidebar-tab:hover {
+  color: var(--text);
+}
+
+.sidebar-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* Propagation tab */
+.propagation-description {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 0 0 1rem;
+}
+
+.n-mode-selector {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1.2rem;
+  padding: 0.25rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+
+.n-mode-btn {
+  flex: 1;
+  padding: 0.55rem 0.35rem;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.n-mode-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.propagation-label {
+  display: block;
+  margin: 0.9rem 0 0.4rem;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.propagation-select,
+.propagation-input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 40px;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.88rem;
+}
+
+.propagation-select:focus,
+.propagation-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.n-reference-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.n-reference-info strong {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.n-reference-info .propagation-label {
+  margin-top: 0.5rem;
+}
+
+.n-current-value {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.8rem;
+  border-radius: 9px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.n-current-value strong {
+  color: var(--accent);
+  font-size: 1.05rem;
+}
+
+.propagation-hint {
+  margin: 0.8rem 0;
+  color: var(--muted);
+  font-size: 0.73rem;
+  line-height: 1.5;
+}
