@@ -12,6 +12,7 @@ O programa pode ser utilizado diretamente pelo navegador, sem necessidade de ins
 
 [**Abrir Simulador**](https://joelanemaria.github.io/Localizacao-de-Descargas-Parciais-IC/)
 
+Teste: https://jmaria774.github.io/Teste---Loc.-DP/ 
 ## Tecnologias utilizadas
 
 - React
