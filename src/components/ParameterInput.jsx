@@ -1,9 +1,7 @@
+
 import React from 'react';
 import './ParameterInput.css';
 
-/**
- * Reusable numeric parameter input with label, unit badge, and tooltip.
- */
 export default function ParameterInput({
   id,
   label,
@@ -18,11 +16,21 @@ export default function ParameterInput({
   disabled = false,
 }) {
   return (
-    <div className="field" title={tooltip || ''}>
-      <label htmlFor={id}>
-        <span className="field-label-text">{label}</span>
-        {unit && <span className="unit">{unit}</span>}
-      </label>
+    <div className="field">
+      <div className="field-header">
+        <label htmlFor={id}>
+          <span className="field-label-text">{label}</span>
+          {unit && <span className="unit">{unit}</span>}
+        </label>
+
+        {tooltip && (
+          <span className="tooltip-icon" tabIndex={0} aria-label={tooltip}>
+            ?
+            <span className="tooltip-text">{tooltip}</span>
+          </span>
+        )}
+      </div>
+
       <input
         type="number"
         id={id}
@@ -34,12 +42,6 @@ export default function ParameterInput({
         required={required}
         disabled={disabled}
       />
-      {tooltip && (
-        <span className="tooltip-icon" tabIndex={0} aria-label={tooltip}>
-          ?
-          <span className="tooltip-text">{tooltip}</span>
-        </span>
-      )}
     </div>
   );
 }
