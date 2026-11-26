@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import Plot from 'react-plotly.js';
 import './Graph.css';
@@ -13,12 +14,16 @@ function getPlotColors(dark) {
     textClr: dark ? '#e8eaf6' : '#1a1d2e',
     lineClr: dark ? '#5c7cfa' : '#3b5bdb',
     legendBg: dark ? 'rgba(26,29,39,.8)' : 'rgba(255,255,255,.85)',
-    bandColor: dark ? 'rgba(92,124,250,0.15)' : 'rgba(59,91,219,0.12)',
+
+    // Faixa de incerteza em laranja
+    bandColor: dark
+      ? 'rgba(255, 159, 67, 0.25)'
+      : 'rgba(230, 126, 34, 0.18)',
   };
 }
 
 /**
- * Graph 1: Received power vs distance (original graph + uncertainty band).
+ * Graph 1: Received power vs distance.
  */
 function DistanceGraph({ distances, Pr, breakpoint, uncertainty, dark }) {
   const colors = getPlotColors(dark);
@@ -26,14 +31,35 @@ function DistanceGraph({ distances, Pr, breakpoint, uncertainty, dark }) {
   const traces = useMemo(() => {
     const t = [];
 
-    // Uncertainty band (shaded area)
-    if (uncertainty && uncertainty.upper && uncertainty.lower) {
+    // Verifica se existem dados válidos de incerteza
+    const hasUncertainty =
+      uncertainty &&
+      Array.isArray(uncertainty.upper) &&
+      Array.isArray(uncertainty.lower) &&
+      uncertainty.upper.length === distances.length &&
+      uncertainty.lower.length === distances.length;
+
+    // Faixa de incerteza
+    if (hasUncertainty) {
+      // Limite superior
       t.push({
-        x: [...distances, ...[...distances].reverse()],
-        y: [...uncertainty.upper, ...[...uncertainty.lower].reverse()],
-        fill: 'toself',
+        x: distances,
+        y: uncertainty.upper,
+        mode: 'lines',
+        line: { color: 'rgba(0,0,0,0)', width: 0 },
+        showlegend: false,
+        hoverinfo: 'skip',
+        type: 'scatter',
+      });
+
+      // Limite inferior e preenchimento entre os limites
+      t.push({
+        x: distances,
+        y: uncertainty.lower,
+        mode: 'lines',
+        line: { color: 'rgba(0,0,0,0)', width: 0 },
+        fill: 'tonexty',
         fillcolor: colors.bandColor,
-        line: { color: 'transparent' },
         name: 'Faixa de incerteza',
         showlegend: true,
         hoverinfo: 'skip',
@@ -41,13 +67,16 @@ function DistanceGraph({ distances, Pr, breakpoint, uncertainty, dark }) {
       });
     }
 
-    // Main received power curve
+    // CURVA PRINCIPAL: sempre desenhada
     t.push({
       x: distances,
       y: Pr,
       mode: 'lines',
       name: 'Potência recebida (dBm)',
-      line: { color: colors.lineClr, width: 2.2 },
+      line: {
+        color: colors.lineClr,
+        width: 1,
+      },
       hovertemplate:
         '<b>Distância</b>: %{x:.1f} m<br><b>Pr</b>: %{y:.2f} dBm<extra></extra>',
       type: 'scatter',
@@ -56,33 +85,48 @@ function DistanceGraph({ distances, Pr, breakpoint, uncertainty, dark }) {
     return t;
   }, [distances, Pr, uncertainty, colors]);
 
-  const prMin = Pr ? Math.min(...Pr) : -100;
-  const prMax = Pr ? Math.max(...Pr) : 0;
+  const prMin = Pr && Pr.length ? Math.min(...Pr) : -100;
+  const prMax = Pr && Pr.length ? Math.max(...Pr) : 0;
 
   const layout = useMemo(
     () => ({
       paper_bgcolor: colors.paperBg,
       plot_bgcolor: colors.plotBg,
+
       margin: { l: 65, r: 30, t: 45, b: 55 },
+
       title: {
         text: 'Potência Recebida vs Distância',
-        font: { color: colors.textClr, size: 15, family: 'Segoe UI, sans-serif' },
+        font: {
+          color: colors.textClr,
+          size: 15,
+          family: 'Segoe UI, sans-serif',
+        },
       },
+
       xaxis: {
-        title: { text: 'Distância (m)', font: { color: colors.textClr } },
+        title: {
+          text: 'Distância (m)',
+          font: { color: colors.textClr },
+        },
         type: 'log',
         tickcolor: colors.gridClr,
         gridcolor: colors.gridClr,
         tickfont: { color: colors.textClr },
         showgrid: true,
       },
+
       yaxis: {
-        title: { text: 'Potência recebida (dBm)', font: { color: colors.textClr } },
+        title: {
+          text: 'Potência recebida (dBm)',
+          font: { color: colors.textClr },
+        },
         tickcolor: colors.gridClr,
         gridcolor: colors.gridClr,
         tickfont: { color: colors.textClr },
         showgrid: true,
       },
+
       shapes: breakpoint
         ? [
             {
@@ -93,10 +137,15 @@ function DistanceGraph({ distances, Pr, breakpoint, uncertainty, dark }) {
               y0: prMin,
               y1: prMax,
               yref: 'y',
-              line: { color: '#f03e3e', dash: 'dash', width: 2 },
+              line: {
+                color: '#f03e3e',
+                dash: 'dash',
+                width: 2,
+              },
             },
           ]
         : [],
+
       annotations: breakpoint
         ? [
             {
@@ -110,7 +159,10 @@ function DistanceGraph({ distances, Pr, breakpoint, uncertainty, dark }) {
               arrowhead: 2,
               ax: 50,
               ay: -30,
-              font: { color: '#f03e3e', size: 11 },
+              font: {
+                color: '#f03e3e',
+                size: 11,
+              },
               bgcolor: colors.paperBg,
               bordercolor: '#f03e3e',
               borderwidth: 1,
@@ -118,6 +170,7 @@ function DistanceGraph({ distances, Pr, breakpoint, uncertainty, dark }) {
             },
           ]
         : [],
+
       legend: {
         x: 0.01,
         y: 0.01,
@@ -133,11 +186,22 @@ function DistanceGraph({ distances, Pr, breakpoint, uncertainty, dark }) {
   const config = {
     responsive: true,
     displayModeBar: true,
-    modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d'],
+    modeBarButtonsToRemove: [
+      'select2d',
+      'lasso2d',
+      'autoScale2d',
+    ],
     displaylogo: false,
   };
 
-  return <Plot data={traces} layout={layout} config={config} className="plot-container" />;
+  return (
+    <Plot
+      data={traces}
+      layout={layout}
+      config={config}
+      className="plot-container"
+    />
+  );
 }
 
 /**
@@ -149,11 +213,24 @@ function HeightGraph({ heights, Pr, uncertainty, dark }) {
   const traces = useMemo(() => {
     const t = [];
 
-    // Uncertainty band (horizontal for this orientation)
-    if (uncertainty && uncertainty.upper && uncertainty.lower) {
+    const hasUncertainty =
+      uncertainty &&
+      Array.isArray(uncertainty.upper) &&
+      Array.isArray(uncertainty.lower) &&
+      uncertainty.upper.length === heights.length &&
+      uncertainty.lower.length === heights.length;
+
+    // Faixa de incerteza
+    if (hasUncertainty) {
       t.push({
-        x: [...uncertainty.upper, ...[...uncertainty.lower].reverse()],
-        y: [...heights, ...[...heights].reverse()],
+        x: [
+          ...uncertainty.upper,
+          ...[...uncertainty.lower].reverse(),
+        ],
+        y: [
+          ...heights,
+          ...[...heights].reverse(),
+        ],
         fill: 'toself',
         fillcolor: colors.bandColor,
         line: { color: 'transparent' },
@@ -164,13 +241,16 @@ function HeightGraph({ heights, Pr, uncertainty, dark }) {
       });
     }
 
-    // Main curve
+    // Curva principal: sempre desenhada
     t.push({
       x: Pr,
       y: heights,
       mode: 'lines',
       name: 'Potência recebida (dBm)',
-      line: { color: colors.lineClr, width: 2.2 },
+      line: {
+        color: colors.lineClr,
+        width: 2.2,
+      },
       hovertemplate:
         '<b>ht</b>: %{y:.1f} m<br><b>Pr</b>: %{x:.2f} dBm<extra></extra>',
       type: 'scatter',
@@ -183,25 +263,40 @@ function HeightGraph({ heights, Pr, uncertainty, dark }) {
     () => ({
       paper_bgcolor: colors.paperBg,
       plot_bgcolor: colors.plotBg,
+
       margin: { l: 65, r: 30, t: 45, b: 55 },
+
       title: {
         text: 'Potência Recebida vs Altura do Transmissor',
-        font: { color: colors.textClr, size: 15, family: 'Segoe UI, sans-serif' },
+        font: {
+          color: colors.textClr,
+          size: 15,
+          family: 'Segoe UI, sans-serif',
+        },
       },
+
       xaxis: {
-        title: { text: 'Potência recebida (dBm)', font: { color: colors.textClr } },
+        title: {
+          text: 'Potência recebida (dBm)',
+          font: { color: colors.textClr },
+        },
         tickcolor: colors.gridClr,
         gridcolor: colors.gridClr,
         tickfont: { color: colors.textClr },
         showgrid: true,
       },
+
       yaxis: {
-        title: { text: 'Altura do transmissor — ht (m)', font: { color: colors.textClr } },
+        title: {
+          text: 'Altura do transmissor — ht (m)',
+          font: { color: colors.textClr },
+        },
         tickcolor: colors.gridClr,
         gridcolor: colors.gridClr,
         tickfont: { color: colors.textClr },
         showgrid: true,
       },
+
       legend: {
         x: 0.01,
         y: 0.99,
@@ -217,11 +312,22 @@ function HeightGraph({ heights, Pr, uncertainty, dark }) {
   const config = {
     responsive: true,
     displayModeBar: true,
-    modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d'],
+    modeBarButtonsToRemove: [
+      'select2d',
+      'lasso2d',
+      'autoScale2d',
+    ],
     displaylogo: false,
   };
 
-  return <Plot data={traces} layout={layout} config={config} className="plot-container" />;
+  return (
+    <Plot
+      data={traces}
+      layout={layout}
+      config={config}
+      className="plot-container"
+    />
+  );
 }
 
 /**
@@ -230,20 +336,30 @@ function HeightGraph({ heights, Pr, uncertainty, dark }) {
 export default function Graph({
   activeTab,
   onTabChange,
+
   // Distance graph props
   distances,
   Pr,
   breakpoint,
   uncertaintyDist,
+
   // Height graph props
   heights,
   PrHeight,
   uncertaintyHeight,
+
   // Theme
   dark,
 }) {
-  const hasDistData = distances && Pr && distances.length > 0;
-  const hasHeightData = heights && PrHeight && heights.length > 0;
+  const hasDistData =
+    distances &&
+    Pr &&
+    distances.length > 0;
+
+  const hasHeightData =
+    heights &&
+    PrHeight &&
+    heights.length > 0;
 
   return (
     <div className="plot-card">
@@ -254,6 +370,7 @@ export default function Graph({
         >
           📊 Potência vs Distância
         </button>
+
         <button
           className={`tab-btn ${activeTab === 'height' ? 'active' : ''}`}
           onClick={() => onTabChange('height')}
@@ -282,10 +399,14 @@ export default function Graph({
           />
         )}
 
-        {((activeTab === 'distance' && !hasDistData) ||
-          (activeTab === 'height' && !hasHeightData)) && (
+        {(
+          (activeTab === 'distance' && !hasDistData) ||
+          (activeTab === 'height' && !hasHeightData)
+        ) && (
           <div className="plot-placeholder">
-            <p>Clique em <strong>⚡ Calcular</strong> para gerar o gráfico.</p>
+            <p>
+              Clique em <strong>⚡ Calcular</strong> para gerar o gráfico.
+            </p>
           </div>
         )}
       </div>
