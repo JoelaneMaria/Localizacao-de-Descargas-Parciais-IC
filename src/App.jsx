@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import KPI from './components/KPI';
@@ -56,29 +57,29 @@ function App() {
   const validateParams = useCallback(() => {
     const p = params;
     const numericFields = {
-  Pt: p.Pt,
-  Gt: p.Gt,
-  Gr: p.Gr,
-  ht: p.ht,
-  hr: p.hr,
-  f: p.f,
-  eps: p.eps,
-  mu: p.mu,
-  sigma: p.sigma,
-  s: p.s,
-  n: p.n,
-};
+      Pt: p.Pt,
+      Gt: p.Gt,
+      Gr: p.Gr,
+      ht: p.ht,
+      hr: p.hr,
+      f: p.f,
+      eps: p.eps,
+      mu: p.mu,
+      sigma: p.sigma,
+      s: p.s,
+      n: p.n,
+    };
 
     const mu = parseFloat(p.mu);
-const sigma = parseFloat(p.sigma);
+    const sigma = parseFloat(p.sigma);
     const n = parseFloat(p.n);
 
-if (mu <= 0) return 'A permeabilidade relativa (μr) deve ser positiva.';
-if (sigma < 0) return 'A condutividade (σ) não pode ser negativa.';
-if (!Number.isFinite(n) || n <= 0) {
-  return 'O expoente de propagação (n) deve ser positivo.';
-}    
-    
+    if (mu <= 0) return 'A permeabilidade relativa (μr) deve ser positiva.';
+    if (sigma < 0) return 'A condutividade (σ) não pode ser negativa.';
+    if (!Number.isFinite(n) || n <= 0) {
+      return 'O expoente de propagação (n) deve ser positivo.';
+    }
+
     for (const [key, val] of Object.entries(numericFields)) {
       const n = parseFloat(val);
       if (isNaN(n)) {
@@ -130,31 +131,35 @@ if (!Number.isFinite(n) || n <= 0) {
     }
 
     const numParams = {
-  Pt: parseFloat(params.Pt),
-  Gt: parseFloat(params.Gt),
-  Gr: parseFloat(params.Gr),
-  ht: parseFloat(params.ht),
-  hr: parseFloat(params.hr),
-  f: parseFloat(params.f),
-  eps: parseFloat(params.eps),
-  mu: parseFloat(params.mu),
-  sigma: parseFloat(params.sigma),
-  s: parseFloat(params.s),
+      Pt: parseFloat(params.Pt),
+      Gt: parseFloat(params.Gt),
+      Gr: parseFloat(params.Gr),
+      ht: parseFloat(params.ht),
+      hr: parseFloat(params.hr),
+      f: parseFloat(params.f),
+      eps: parseFloat(params.eps),
+      mu: parseFloat(params.mu),
+      sigma: parseFloat(params.sigma),
+      s: parseFloat(params.s),
       n: parseFloat(params.n),
-};
+    };
 
     const u = parseFloat(uncertainty);
 
     try {
-      // Always calculate distance graph
-      const distances = generateDistances(1, 1000, 2000);
+      // Calculate distance graph over an extended range
+      const distances = generateDistances(0.1, 10000, 5000);
       const distCalc = calcTwoRayModel(numParams, distances);
       const distUncertainty = calcUncertaintyBands(distCalc.Pr, u);
 
       // Find Pr at d=1m and at breakpoint
-      const prAt1m = distCalc.Pr[0];
+      const idx1m = distances.findIndex((di) => di >= 1);
+      const prAt1m = distCalc.Pr[idx1m];
+
       const idxR = distances.findIndex((di) => di >= distCalc.breakpoint);
-      const prAtR = idxR >= 0 ? distCalc.Pr[idxR] : distCalc.Pr[distCalc.Pr.length - 1];
+      const prAtR = idxR >= 0
+        ? distCalc.Pr[idxR]
+        : distCalc.Pr[distCalc.Pr.length - 1];
 
       setDistResult({
         distances,
