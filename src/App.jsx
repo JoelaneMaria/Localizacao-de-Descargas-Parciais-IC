@@ -55,8 +55,30 @@ function App() {
   // Validation
   const validateParams = useCallback(() => {
     const p = params;
-    const numericFields = { Pt: p.Pt, Gt: p.Gt, Gr: p.Gr, ht: p.ht, hr: p.hr, f: p.f, eps: p.eps, s: p.s };
+    const numericFields = {
+  Pt: p.Pt,
+  Gt: p.Gt,
+  Gr: p.Gr,
+  ht: p.ht,
+  hr: p.hr,
+  f: p.f,
+  eps: p.eps,
+  mu: p.mu,
+  sigma: p.sigma,
+  s: p.s,
+  n: p.n,
+};
 
+    const mu = parseFloat(p.mu);
+const sigma = parseFloat(p.sigma);
+    const n = parseFloat(p.n);
+
+if (mu <= 0) return 'A permeabilidade relativa (μr) deve ser positiva.';
+if (sigma < 0) return 'A condutividade (σ) não pode ser negativa.';
+if (!Number.isFinite(n) || n <= 0) {
+  return 'O expoente de propagação (n) deve ser positivo.';
+}    
+    
     for (const [key, val] of Object.entries(numericFields)) {
       const n = parseFloat(val);
       if (isNaN(n)) {
@@ -108,15 +130,18 @@ function App() {
     }
 
     const numParams = {
-      Pt: parseFloat(params.Pt),
-      Gt: parseFloat(params.Gt),
-      Gr: parseFloat(params.Gr),
-      ht: parseFloat(params.ht),
-      hr: parseFloat(params.hr),
-      f: parseFloat(params.f),
-      eps: parseFloat(params.eps),
-      s: parseFloat(params.s),
-    };
+  Pt: parseFloat(params.Pt),
+  Gt: parseFloat(params.Gt),
+  Gr: parseFloat(params.Gr),
+  ht: parseFloat(params.ht),
+  hr: parseFloat(params.hr),
+  f: parseFloat(params.f),
+  eps: parseFloat(params.eps),
+  mu: parseFloat(params.mu),
+  sigma: parseFloat(params.sigma),
+  s: parseFloat(params.s),
+      n: parseFloat(params.n),
+};
 
     const u = parseFloat(uncertainty);
 
