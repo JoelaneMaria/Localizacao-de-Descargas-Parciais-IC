@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import KPI from './components/KPI';
@@ -55,33 +56,36 @@ function App() {
   // Validation
   const validateParams = useCallback(() => {
     const p = params;
+
     const numericFields = {
-  Pt: p.Pt,
-  Gt: p.Gt,
-  Gr: p.Gr,
-  ht: p.ht,
-  hr: p.hr,
-  f: p.f,
-  eps: p.eps,
-  mu: p.mu,
-  sigma: p.sigma,
-  s: p.s,
-  n: p.n,
-};
+      Pt: p.Pt,
+      Gt: p.Gt,
+      Gr: p.Gr,
+      ht: p.ht,
+      hr: p.hr,
+      f: p.f,
+      eps: p.eps,
+      mu: p.mu,
+      sigma: p.sigma,
+      s: p.s,
+      n: p.n,
+    };
 
     const mu = parseFloat(p.mu);
-const sigma = parseFloat(p.sigma);
+    const sigma = parseFloat(p.sigma);
     const n = parseFloat(p.n);
 
-if (mu <= 0) return 'A permeabilidade relativa (μr) deve ser positiva.';
-if (sigma < 0) return 'A condutividade (σ) não pode ser negativa.';
-if (!Number.isFinite(n) || n <= 0) {
-  return 'O expoente de propagação (n) deve ser positivo.';
-}    
-    
+    if (mu <= 0) return 'A permeabilidade relativa (μr) deve ser positiva.';
+    if (sigma < 0) return 'A condutividade (σ) não pode ser negativa.';
+
+    if (!Number.isFinite(n) || n <= 0) {
+      return 'O expoente de propagação (n) deve ser positivo.';
+    }
+
     for (const [key, val] of Object.entries(numericFields)) {
-      const n = parseFloat(val);
-      if (isNaN(n)) {
+      const value = parseFloat(val);
+
+      if (isNaN(value)) {
         return `Valor inválido para o parâmetro "${key}".`;
       }
     }
@@ -99,6 +103,7 @@ if (!Number.isFinite(n) || n <= 0) {
     if (s < 0) return 'A rugosidade (s) não pode ser negativa.';
 
     const u = parseFloat(uncertainty);
+
     if (isNaN(u) || u < 0 || u >= 100) {
       return 'A incerteza deve estar entre 0% e 99,99%.';
     }
@@ -113,7 +118,9 @@ if (!Number.isFinite(n) || n <= 0) {
       if (isNaN(hMin) || hMin <= 0) return 'A altura mínima deve ser positiva.';
       if (isNaN(hMax) || hMax <= 0) return 'A altura máxima deve ser positiva.';
       if (hMin >= hMax) return 'A altura mínima deve ser menor que a máxima.';
-      if (isNaN(hSamples) || hSamples < 10) return 'O número de amostras deve ser pelo menos 10.';
+      if (isNaN(hSamples) || hSamples < 10) {
+        return 'O número de amostras deve ser pelo menos 10.';
+      }
     }
 
     return null;
@@ -124,37 +131,53 @@ if (!Number.isFinite(n) || n <= 0) {
     setErrorMsg('');
 
     const error = validateParams();
+
     if (error) {
       setErrorMsg(error);
       return;
     }
 
     const numParams = {
-  Pt: parseFloat(params.Pt),
-  Gt: parseFloat(params.Gt),
-  Gr: parseFloat(params.Gr),
-  ht: parseFloat(params.ht),
-  hr: parseFloat(params.hr),
-  f: parseFloat(params.f),
-  eps: parseFloat(params.eps),
-  mu: parseFloat(params.mu),
-  sigma: parseFloat(params.sigma),
-  s: parseFloat(params.s),
+      Pt: parseFloat(params.Pt),
+      Gt: parseFloat(params.Gt),
+      Gr: parseFloat(params.Gr),
+      ht: parseFloat(params.ht),
+      hr: parseFloat(params.hr),
+      f: parseFloat(params.f),
+      eps: parseFloat(params.eps),
+      mu: parseFloat(params.mu),
+      sigma: parseFloat(params.sigma),
+      s: parseFloat(params.s),
       n: parseFloat(params.n),
-};
+    };
 
     const u = parseFloat(uncertainty);
 
     try {
-      // Always calculate distance graph
-      const distances = generateDistances(1, 1000, 2000);
+      // Calculate distance graph over an extended range.
+      // Initial visualization remains between 1 m and 1000 m.
+      const generatedDistances = generateDistances(0.1, 30000, 60000);
+
+      // Ensure that exactly 1 meter is included for the KPI calculation.
+      const distances = [
+        ...new Set([...generatedDistances, 1]),
+      ].sort((a, b) => a - b);
+
       const distCalc = calcTwoRayModel(numParams, distances);
       const distUncertainty = calcUncertaintyBands(distCalc.Pr, u);
 
-      // Find Pr at d=1m and at breakpoint
-      const prAt1m = distCalc.Pr[0];
-      const idxR = distances.findIndex((di) => di >= distCalc.breakpoint);
-      const prAtR = idxR >= 0 ? distCalc.Pr[idxR] : distCalc.Pr[distCalc.Pr.length - 1];
+      // Find Pr exactly at 1 meter
+      const idx1m = distances.indexOf(1);
+      const prAt1m = distCalc.Pr[idx1m];
+
+      // Find Pr at breakpoint
+      const idxR = distances.findIndex(
+        (di) => di >= distCalc.breakpoint
+      );
+
+      const prAtR = idxR >= 0
+        ? distCalc.Pr[idxR]
+        : distCalc.Pr[distCalc.Pr.length - 1];
 
       setDistResult({
         distances,
@@ -202,6 +225,7 @@ if (!Number.isFinite(n) || n <= 0) {
           Two-Ray Ground Reflection&nbsp;
           <span>— Modelo de Dois Raios</span>
         </h1>
+
         <button className="toggle-btn" onClick={toggleTheme} type="button">
           <span className="toggle-icon">{dark ? '☀️' : '🌙'}</span>
           <span>{dark ? 'Modo Claro' : 'Modo Escuro'}</span>
@@ -233,18 +257,21 @@ if (!Number.isFinite(n) || n <= 0) {
               sub="metros"
               tooltip="Comprimento de onda do sinal eletromagnético, calculado como c/f."
             />
+
             <KPI
               label="Distância de transição (Rb)"
               value={distResult ? distResult.breakpoint.toFixed(1) : '—'}
               sub="metros"
               tooltip="Distância de transição (breakpoint): Rb = 4·ht·hr / λ. Além desta distância, o modelo de dois raios prevê atenuação mais acentuada."
             />
+
             <KPI
               label="Potência recebida a 1 m"
               value={distResult ? distResult.prAt1m.toFixed(2) : '—'}
               sub="dBm"
               tooltip="Potência recebida calculada na distância de referência de 1 metro."
             />
+
             <KPI
               label="Potência recebida na distância de transição"
               value={distResult ? distResult.prAtR.toFixed(2) : '—'}
