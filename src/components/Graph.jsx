@@ -67,7 +67,7 @@ function DistanceGraph({ distances, Pr, breakpoint, uncertainty, dark }) {
       });
     }
 
-    // CURVA PRINCIPAL: sempre desenhada
+    // Curva principal
     t.push({
       x: distances,
       y: Pr,
@@ -93,6 +93,12 @@ function DistanceGraph({ distances, Pr, breakpoint, uncertainty, dark }) {
       paper_bgcolor: colors.paperBg,
       plot_bgcolor: colors.plotBg,
 
+      // Preserve the user's zoom and pan position
+      uirevision: 'distance-graph',
+
+      // Allow horizontal dragging
+      dragmode: 'pan',
+
       margin: { l: 65, r: 30, t: 45, b: 55 },
 
       title: {
@@ -110,6 +116,12 @@ function DistanceGraph({ distances, Pr, breakpoint, uncertainty, dark }) {
           font: { color: colors.textClr },
         },
         type: 'log',
+
+        // Initial view: 1 m to 1000 m
+        range: [0, 3],
+        autorange: false,
+        fixedrange: false,
+
         tickcolor: colors.gridClr,
         gridcolor: colors.gridClr,
         tickfont: { color: colors.textClr },
@@ -149,7 +161,8 @@ function DistanceGraph({ distances, Pr, breakpoint, uncertainty, dark }) {
       annotations: breakpoint
         ? [
             {
-              x: Math.log10(breakpoint),
+              // Use the actual distance, not log10(distance)
+              x: breakpoint,
               xref: 'x',
               y: prMax,
               yref: 'y',
@@ -241,7 +254,7 @@ function HeightGraph({ heights, Pr, uncertainty, dark }) {
       });
     }
 
-    // Curva principal: sempre desenhada
+    // Curva principal
     t.push({
       x: Pr,
       y: heights,
